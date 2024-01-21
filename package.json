@@ -1,0 +1,20 @@
+{
+  "name": "js-jcoize",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@bytecodealliance/jco": "^0.14.2",
+    "libnpmpack": "^6.0.5",
+    "libnpmpublish": "^9.0.3",
+    "npm-registry-fetch": "^16.1.0",
+    "pacote": "^17.0.5"
+  }
+}
