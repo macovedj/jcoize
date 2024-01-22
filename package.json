@@ -12,9 +12,11 @@
   "license": "ISC",
   "dependencies": {
     "@bytecodealliance/jco": "^0.14.2",
+    "jco": "../mine/jco",
     "libnpmpack": "^6.0.5",
     "libnpmpublish": "^9.0.3",
     "npm-registry-fetch": "^16.1.0",
-    "pacote": "^17.0.5"
+    "pacote": "^17.0.5",
+    "path": "^0.12.7"
   }
 }

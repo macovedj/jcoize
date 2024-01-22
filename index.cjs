@@ -1,36 +1,60 @@
-const transpile = import("@bytecodealliance/jco")
+const transpile = import("jco")
 const publish = require("libnpmpublish")
 const pack = require('libnpmpack')
-const pacote = require("pacote")
 const fs = require("fs")
+const path = require("path")
 
-async function execute(name, version, description, author, license) {
-  const wasm = fs.readFileSync("./jcoize.wasm")
-  const transpilable = await transpile
-  const transpiled = await transpilable.transpile(wasm, {wasiShim: true}, "foo")
-  for (const [fileName, bytes] of Object.entries(transpiled.files)) {
-    fs.writeFileSync(`./package/${fileName}`, bytes)
-  }
-  fs.writeFileSync(`./package/package.json`, JSON.stringify({
+const resolve = (...str) => path.resolve(__dirname, ...str);
+
+async function execute({name, version, description, author, license}) {
+  const transpileFunc = await transpile
+  console.log("transpiling for node")
+  const transpiledNode = await transpileFunc.transpile(wasm, {wasiShim: true}, "foo")
+  console.log("transpiling for browser")
+  const transpiledBrowser = await transpileFunc.transpile(wasm, {wasiShim: true, nodeJsCompat: false}, "foo")
+  fs.mkdirSync(`./${name}/node/interfaces`, {recursive: true})
+  fs.mkdirSync(`./${name}/browser/interfaces`, {recursive: true})
+  fs.writeFileSync("./README.md", "")
+  fs.writeFileSync(`./${name}/package.json`, JSON.stringify({
     name,
     version,
     description,
-    "main": "component.js",
-    "scripts": {
-      "test": "echo \"Error: no test specified\" && exit 1"
-    },
     author,
+    repository: "",
     license,
-    "types": "./component.d.ts"
-  }))
-  const manifest = await pacote.manifest("./package")
-  const packable = await pack
-  const tarData = await packable("./package")
-  const publishable = await publish
-  await publishable.publish(manifest, tarData, {
+    exports: {
+      browser: `./browser`,
+      node: `./node`
+    }
+  }, null, 2))
+  console.log("WRITING FOR NODE")
+  for (const [fileName, bytes] of Object.entries(transpiledNode.files)) {
+    fs.writeFileSync(`./${name}/node/${fileName}`, bytes)
+  }
+  console.log("WRITING FOR BROWSER")
+  for (const [fileName, bytes] of Object.entries(transpiledBrowser.files)) {
+    fs.writeFileSync(`./${name}/browser/${fileName}`, bytes)
+  }
+
+  console.log("manifesting")
+  console.log("packing")
+
+  const pkg = require(resolve(`./${name}/package.json`));
+  const tarData = await pack(`./${name}`)
+  console.log("publishing")
+  await publish.publish(pkg, tarData, {
     forceAuth: {
-      token: 'NPMTOKEN'
+      access: true,
+      token: process.env.NPM_TOKEN
     }
   })
 }
-execute("1.0.7")
+
+const filePath = process.argv[2].split("/");
+const wasm = fs.readFileSync(filePath[filePath.length - 1])
+const version = process.argv[3]
+console.log({version})
+const description = ""
+const author = ""
+const license = ""
+execute({name: filePath[filePath.length - 1].split(".")[0], version, description, author, license })
